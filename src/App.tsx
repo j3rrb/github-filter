@@ -1,39 +1,68 @@
-import React from "react";
-import { Provider } from "react-redux";
+import { useEffect } from "react";
 import List from "./components/List/List";
 import ListItem from "./components/ListItem/ListItem";
 import SearchBar from "./components/SearchBar/SearchBar";
-import { store } from "./redux/store";
 import { User } from "./types";
+import { useUsers } from "./contexts/userContext";
+import { getAllUsers, getUserByName } from "./services/users";
 
 export default function App() {
+  const { users, setUsers, isLoading, setIsLoading } = useUsers();
+
+  const getUsers = async () => {
+    setIsLoading(true);
+
+    const users = (await getAllUsers()).map(
+      ({ avatar_url, html_url: url, login: name }) => ({
+        avatar_url,
+        url,
+        name,
+      })
+    );
+
+    setIsLoading(false);
+
+    setUsers(users);
+  };
+
+  useEffect(() => {
+    (async () => await getUsers())();
+  }, []);
+
   return (
-    <Provider store={store}>
+    <main>
       <div>
         <h1>GitHub Filter</h1>
       </div>
       <div>
         <SearchBar
-          onChange={(text) => {
-            console.log(text);
+          onChange={async (text) => {
+            if (text) {
+              setIsLoading(true);
+
+              const {
+                avatar_url,
+                html_url: url,
+                login: name,
+              } = await getUserByName(text);
+
+              setIsLoading(false);
+
+              setUsers([{ avatar_url, url, name }]);
+            } else {
+              await getUsers();
+            }
           }}
-        />
-        <List
-          data={[
-            {
-              avatar_url: "https://cameronmcefee.com/img/work/the-octocat/walk-1.gif",
-              name: "test",
-              url: "https://google.com",
-            },
-            {
-              avatar_url: "https://cameronmcefee.com/img/work/the-octocat/walk-1.gif",
-              name: "test",
-              url: "https://google.com",
-            },
-          ]}
-          renderItem={(e: User) => <ListItem data={e} />}
+          timeout={200}
         />
       </div>
-    </Provider>
+      <div>
+        {isLoading ? (
+          <h3>Loading...</h3>
+        ) : (
+          <List data={users} renderItem={(e: User) => <ListItem data={e} />} />
+        )}
+      </div>
+    </main>
   );
 }

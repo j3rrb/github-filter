@@ -1,8 +1,3 @@
-export type Action = {
-  type: string;
-  payload: any;
-};
-
 export type UserResponse = {
   login: string;
   id: number;
@@ -28,4 +23,12 @@ export type User = {
   name: UserResponse["login"];
   avatar_url: UserResponse["avatar_url"];
   url: UserResponse["html_url"];
+};
+
+export type State = {
+  users: User[];
+  filter: {
+    order: string;
+    sortBy: string;
+  };
 };
